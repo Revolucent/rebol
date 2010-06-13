@@ -132,9 +132,27 @@ conlang!: object [
 ]   
 
 parse-conlang: funct [
+	{Parses a block of rules in the CONLANG dialect and returns an object which can be repeatedly
+	evaluated to produce a random word according to the given rules.
+	
+	Example:
+	
+	; Given the following declaration in the CONLANG dialect:
+	
+	^-conlang: [
+	^-^-main: rept 1 4 join [rand "ktp" rand "aeo"]
+	^-]
+	
+	; We can then do the following:
+	
+	^->> word-generator: parse-conlang conlang
+	^->> random/seed now ; Don't do this before every call to eval. Once per session is enough.
+	^->> word-generator/eval
+	^-== "ka"
+	}
 	arg [file! string! block!]
 ][
 	arg: either block? arg [arg] [load/unbound arg]
-	conlang: make conlang! none
+	conlang: make conlang! []
 	either parse arg conlang/conlang [conlang/names/main] [none]
 ]
