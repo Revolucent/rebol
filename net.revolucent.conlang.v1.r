@@ -23,6 +23,9 @@ conlang!: object [
 		either string [
 			append spec compose/deep [
 				eval: does [to string! random/only (s)]
+				tree: does [
+					copy ['rand (s)]
+				]
 			]
 		][
 			append spec [
@@ -34,6 +37,13 @@ conlang!: object [
 					]
 					e: random/only list
 					e/eval
+				]
+				tree: has [list] [
+					list: copy []
+					foreach e expressions [
+						repend list [e/weight e/tree]
+					]
+					reduce ['rand list]
 				]
 			]
 		]
@@ -49,6 +59,13 @@ conlang!: object [
 					append result e/eval
 				]
 				result
+			]
+			tree: has [list] [
+				list: copy []
+				foreach e expressions [
+					append list e/tree
+				]
+				reduce ['join list]
 			]
 		]
 	]
@@ -73,6 +90,9 @@ conlang!: object [
 				]
 				result
 			]
+			tree: does [
+				reduce ['rept min-repeat max-repeat expressions/1/tree]
+			]
 		]
 	]
 	
@@ -81,6 +101,7 @@ conlang!: object [
 	][
 		make expression! [
 			eval: value
+			tree: value
 		]
 	]
 	
@@ -92,6 +113,9 @@ conlang!: object [
 			eval: does [
 				names/:ref/eval
 			]
+			tree: does [
+				names/:ref/tree
+			]
 		]
 	]
 	
@@ -102,6 +126,8 @@ conlang!: object [
 	][
 		append current/expressions o
 		o/parent: current
+		o/weight: weight
+		weight: 1
 		current: o
 	]
 	
@@ -110,11 +136,11 @@ conlang!: object [
 	]
 	
 	; Some temporary variables for parsing
-	e: n: mn: mx: name: none
+	e: weight: mn: mx: name: none
 		
 	expression: [
 		'rand set e string! (push make-rand/string e pop)
-	|	'rand (push make-rand) into [some [(n: 1) opt [set n integer!] expression (set in last current/expressions 'weight n)]] (pop)
+	|	'rand (push make-rand) into [some [(weight: 1) opt [set weight integer!] expression]] (pop)
 	|	'rept set mn integer! set mx integer! (push make-rept mn mx) expression (pop)
 	|	'join (push make-join) into [some expression] (pop)
 	|	set e string! (push make-string e pop)
