@@ -1,10 +1,34 @@
+{Copyright (c) 2010 Gregory Higley
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.}
+
 REBOL [
-	author: "Gregory Higley"
-	title: "Revolucent Series Module"
-	name: net.revolucent.series
+	title: "Revolucent Series Module"	
+	name: net.revolucent.series	
 	type: module
-	version: 1.8.0
+	file: %net.revolucent.series.v1.r	
+	author: "Gregory Higley"
+	date: 2010-08-01
+	version: 1.9.0
 	history: [
+		1.9.0 {Added VALUES.}
+		1.8.1 {Added a dependency to NET.REVOLUCENT.CORE/PROTECT-MODULE.}
 		1.8.0 {Added CHANGE-EACH.}
 		1.7.0 {Added DELIMIT and ENCOMMA.}
 		1.6.1 {Improved the implementation of DROP-WHILE.}
@@ -21,7 +45,10 @@ REBOL [
 		1.1.0 {Added the FOLD function.}
 		1.0.0 {Added INTERPOLATE and RANGE functions.}
 	]	
-	needs: [2.100.94]	
+	needs: [
+		2.100.99
+		http://r3.revolucent.net/net.revolucent.core.v1.r 1.3.4
+	]	
 	exports: [
 		cartesian
 		change-each
@@ -36,7 +63,11 @@ REBOL [
 		permute
 		range
 		sift
+		values
+		zip
 	]
+	purpose: "Various series utilities, many with a functional bent"
+	license: 'mit
 ]
 
 change-each: funct [
@@ -197,14 +228,14 @@ cartesian: funct [
 		list: clear []
 		loop i: len [
 			insert list lists/:i/1
-			i: i - 1
+			-- i
 		]
 		result: change/only result copy list
 		loop i: len [
 			unless tail? lists/:i: next lists/:i [break]
 			if i = 1 [break]
 			lists/:i: head lists/:i
-			i: i - 1
+			-- i
 		]
 		tail? lists/1
 	]
@@ -319,3 +350,14 @@ encomma: funct [
 ][
 	delimit series ", "
 ]
+
+values: funct [
+	{Same as MAP-EACH, but reduces the DATA argument first.}
+	'word [word!]
+	data [block! vector!]
+	body [block!]
+][
+	map-each :word reduce data body
+]
+
+protect-module self

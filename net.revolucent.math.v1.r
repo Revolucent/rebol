@@ -1,29 +1,57 @@
+{Copyright (c) 2010 Gregory Higley
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.}
+
 REBOL [
-	author: "Gregory Higley"
+	title: "Revolucent Math Module"
+	name: net.revolucent.math	
 	type: module
-	name: net.revolucent.math
-	version: 1.9.0
+	file: %net.revolucent.math.v1.r	
+	author: "Gregory Higley"
+	date: 2010-08-01
+	version: 1.11.0
 	history: [
-		1.9.0 {Added FROM-BASE and TO-BASE.}
-		1.8.0 {Added INTEGER-SEQUENCE.}
-		1.7.0 {Added AVERAGE. Added NUMBERS! Fixed FACTORS. Fixed SUM and PRODUCT for empty lists. Losened some type signatures.}
-		1.6.1 {Fixed a bug in FACTORIAL due to a change in how INTERPOLATE works.}
-		1.6.0 {Added LONG-DIVIDE and REPEAT-LENGTH.}
-		1.5.0 {Added DIVISORS, FACTORS, AND FACTORIAL.}
-		1.4.1 {Updated FIBONACCI and ROWLAND.}
-		1.4.0 {Added ROWLAND.}
-		1.3.0 {Added GCD.}
-		1.2.0 {Added FIBONACCI.}
-		1.1.1 {Added /RECURSE refinement to DIGITAL-PRODUCT and DIGITAL-SUM functions. Added /SKIP0 refinement to DIGITAL-PRODUCT.}
-		1.1.0 {Added DIGITAL-PRODUCT and DIGITAL-SUM functions.}
-		1.0.0 {Added SUM and PRODUCT functions.}
+		1.11.0 {Added COLLATZ.}
+		1.10.0 {Added LCM.}
+		1.09.1 {Added a dependency to NET.REVOLUCENT.CORE/PROTECT-MODULE.}
+		1.09.0 {Added FROM-BASE and TO-BASE.}
+		1.08.0 {Added INTEGER-SEQUENCE.}
+		1.07.0 {Added AVERAGE. Added NUMBERS! Fixed FACTORS. Fixed SUM and PRODUCT for empty lists. Losened some type signatures.}
+		1.06.1 {Fixed a bug in FACTORIAL due to a change in how INTERPOLATE works.}
+		1.06.0 {Added LONG-DIVIDE and REPEAT-LENGTH.}
+		1.05.0 {Added DIVISORS, FACTORS, AND FACTORIAL.}
+		1.04.1 {Updated FIBONACCI and ROWLAND.}
+		1.04.0 {Added ROWLAND.}
+		1.03.0 {Added GCD.}
+		1.02.0 {Added FIBONACCI.}
+		1.01.1 {Added /RECURSE refinement to DIGITAL-PRODUCT and DIGITAL-SUM functions. Added /SKIP0 refinement to DIGITAL-PRODUCT.}
+		1.01.0 {Added DIGITAL-PRODUCT and DIGITAL-SUM functions.}
+		1.00.0 {Added SUM and PRODUCT functions.}
 	]
 	needs: [
-		2.100.95
-		http://r3.revolucent.net/net.revolucent.series.v1.r
+		2.100.99
+		http://r3.revolucent.net/net.revolucent.core.v1.r 1.3.4
+		http://r3.revolucent.net/net.revolucent.series.v1.r 1.8.1
 	]
 	exports: [
 		average
+		collatz
 		digital-product
 		digital-sum
 		divisors
@@ -34,6 +62,7 @@ REBOL [
 		integer-sequence
 		long-divide
 		gcd
+		lcm
 		numbers!
 		permute
 		product
@@ -42,6 +71,8 @@ REBOL [
 		sum
 		to-base
 	]
+	purpose: "Various math utilities"
+	license: 'mit
 ]
 
 numbers!: make typeset! [block! paren! vector!]
@@ -161,6 +192,14 @@ gcd: func [
     n [integer!]
 ][
     abs either zero? n [0] [either zero? (m // n) [n] [gcd n (m // n)]]
+]
+
+lcm: funct [
+	{Computes the least common multiple of two integers.}
+	x [integer!]
+	y [integer!]
+][
+	(x * y) / gcd x y
 ]
 
 divisors: funct [
@@ -363,4 +402,43 @@ from-base: funct [
 	result
 ]
 
+collatz: object [
+	
+	cache: none
+	
+	lookup: func [
+		{Calculates the number of steps required to reach 1 in the Collatz Conjencture.
+		Note that this function uses memoization, which could in theory consume large amounts of memory,
+		but in most cases probably will not. Use the RESET method of the COLLATZ object to reset the cache.}
+		n [integer!]
+		/local
+			result
+	][
+		either result: cache/:n [
+			debug-print/for reword "$n is in the Collatz cache with value $result." reduce ['n n 'result result] [net.revolucent.math]
+			result
+		][
+			debug-print/for [n "is not in the Collatz cache. Adding."] [net.revolucent.math]
+			cache/:n: 1 + lookup either odd? n [3 * n + 1] [n / 2]
+		]
+	]
+	
+	reset: does [
+		debug-probe/for cache [net.revolucent.math]
+		cache: make map! [
+			  0 1
+			  1 1
+			 -1 1
+			 -5 1
+			-17 1
+		]
+		exit
+	]
+	
+	reset
+	
+	protect/words [lookup reset]
+	protect/hide 'cache
+]
 
+protect-module self

@@ -1,7 +1,45 @@
+{Copyright (c) 2010 Gregory Higley
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.}
+
 REBOL [
+	title: "Revolucent Conlang Module"
+	name: net.revolucent.conlang	
 	type: module
-	name: net.revolucent.conlang
+	file: %net.revolucent.conlang.v1.r
+	author: "Gregory Higley"
+	date: 2010-08-01
+	version: 1.0.1
+	needs: [
+		2.100.99
+		http://r3.revolucent.net/net.revolucent.core.v1.r 1.3.4
+	]
 	exports: [parse-conlang]
+	history: [
+		1.0.1 {Added a dependency to NET.REVOLUCENT.CORE/PROTECT-MODULE.}
+	]
+	purpose: {
+		The Revolucent Conlang Module provides a way for conlang authors
+		to generate random words in a language whose idealized phonemic
+		structure is specified in the Conlang dialect.
+	}
+	license: 'mit
 ]
 
 conlang!: object [
@@ -182,3 +220,5 @@ parse-conlang: funct [
 	conlang: make conlang! []
 	either parse arg conlang/conlang [conlang/names/main] [none]
 ]
+
+protect-module self
