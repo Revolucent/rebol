@@ -72,4 +72,4 @@ extract-ips: funct [
 	either parse string rules [addresses] [none]
 ]
 
-protect-module self
+; protect-module self

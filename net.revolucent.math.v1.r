@@ -439,6 +439,7 @@ collatz: object [
 	
 	protect/words [lookup reset]
 	protect/hide 'cache
+	debug-do/for [unprotect 'cache] [net.revolucent.math]
 ]
 
-protect-module self
+; protect-module self

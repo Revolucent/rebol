@@ -360,4 +360,4 @@ values: funct [
 	map-each :word reduce data body
 ]
 
-protect-module self
+; protect-module self

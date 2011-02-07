@@ -27,6 +27,7 @@ REBOL [
 	date: 2010-08-01
 	version: 1.3.6
 	history: [
+		1.3.7 {Added LAMBDA.}
 		1.3.6 {Added FALSE?.}
 		1.3.5 [
 			{Added NIL?.}
@@ -41,7 +42,7 @@ REBOL [
 		1.1.0 {Added TEST.}
 		1.0.0 {Added MODULE-CHECKSUM.}
 	]
-	needs: [2.100.99]
+	needs: [2.100.109]
 	exports: [
 		args
 		id
@@ -53,6 +54,7 @@ REBOL [
 		debug-probe
 		enable-debug
 		false?
+		lambda
 		module-checksum
 		nil?
 		protect-module
@@ -166,6 +168,29 @@ id: funct [
 	:a
 ]
 
+lambda: funct [
+	{Creates a lambda, as follows:
+	
+^-^-lambda [ x [integer!] y [integer!] | x + y ]
+}
+	def [block!]
+][
+	spec: copy []
+	body: copy []
+	current: spec
+	seen: false
+	while [! tail? def] [
+		item: first+ def
+		either all [! seen equal? '| item] [
+			seen: true
+			current: body
+		][
+			append/only current item
+		]
+	]
+	funct spec body
+]
+
 module-checksum: funct [
 	{Calculates a module checksum}
 	source [url! file!]
@@ -228,7 +253,7 @@ protect-module: funct [
 		words [block!] {A block of words that will not be touched either way.}
 ][
 	unless exclude [words: copy []]
-	exclude: :system/contexts/system/exclude
+	exclude: :lib/exclude
 	module-words: exclude words-of m words
 	protect/words module-words
 	unless expose [
@@ -237,4 +262,4 @@ protect-module: funct [
 	]
 ]
 
-protect-module/exclude self [debug debug-words]
+; protect-module/exclude self [debug debug-words]

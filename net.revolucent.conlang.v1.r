@@ -25,13 +25,14 @@ REBOL [
 	file: %net.revolucent.conlang.v1.r
 	author: "Gregory Higley"
 	date: 2010-08-01
-	version: 1.0.1
+	version: 1.0.2
 	needs: [
 		2.100.99
 		http://r3.revolucent.net/net.revolucent.core.v1.r 1.3.4
 	]
 	exports: [parse-conlang]
 	history: [
+		1.0.2 {Added '?, '* and '& as synonyms for 'RAND, 'REPT, and 'JOIN respectively.}
 		1.0.1 {Added a dependency to NET.REVOLUCENT.CORE/PROTECT-MODULE.}
 	]
 	purpose: {
@@ -177,10 +178,10 @@ conlang!: object [
 	e: weight: mn: mx: name: none
 		
 	expression: [
-		'rand set e string! (push make-rand/string e pop)
-	|	'rand (push make-rand) into [some [(weight: 1) opt [set weight integer!] expression]] (pop)
-	|	'rept set mn integer! set mx integer! (push make-rept mn mx) expression (pop)
-	|	'join (push make-join) into [some expression] (pop)
+		['rand | '? ] set e string! (push make-rand/string e pop)
+	|	['rand | '? ] (push make-rand) into [some [(weight: 1) opt [set weight integer!] expression]] (pop)
+	|	['rept | '* ] set mn integer! set mx integer! (push make-rept mn mx) expression (pop)
+	|	['join | '& ] (push make-join) into [some expression] (pop)
 	|	set e string! (push make-string e pop)
 	|	set e word! (push make-ref e pop)
 	]
@@ -221,4 +222,4 @@ parse-conlang: funct [
 	either parse arg conlang/conlang [conlang/names/main] [none]
 ]
 
-protect-module self
+; protect-module self
