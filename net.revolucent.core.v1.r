@@ -42,7 +42,7 @@ REBOL [
 		1.1.0 {Added TEST.}
 		1.0.0 {Added MODULE-CHECKSUM.}
 	]
-	needs: [2.100.109]
+	needs: [2.100.99]
 	exports: [
 		args
 		id
