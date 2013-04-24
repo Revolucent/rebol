@@ -26,7 +26,7 @@ REBOL [
 	]	
 	License: MIT
 	History: [
-		2013-04-24 {Renamed PARSE-CSV to READ-CSV in anticipation of WRITE-CSV}
+		2013-04-24 {Renamed PARSE-CSV to READ-CSV in anticipation of WRITE-CSV. Fixed a bug that occurs when the escape-char and quote-char are the same.}
 	]
 ]
 
@@ -147,8 +147,6 @@ csv: funct [
 		transform [any-function!] "Transform a row into e.g. an object"
 	/local
 		chunk [string!]
-		item [string!]
-		items [block!]
 ][
 	default quote-char #"^""
 	default sep-char #","
@@ -158,16 +156,27 @@ csv: funct [
 	remove-each char whitespace-chars [any [equal? sep-char char equal? quote-char char]]
 	whitespace: charset whitespace-chars
 	characters: complement charset rejoin [whitespace-chars sep-char quote-char]
-	either escape-char [
-		; If we have an escape char our quoted-item becomes much more complex
+	either escape-char [ ; If we have an escape char our quoted-item becomes much more complex
 		escaped-quote: rejoin [escape-char quote-char]
-		quoted-item: [
-			quote-char 
-			any [ copy chunk to escaped-quote escaped-quote (repend item [chunk quote-char]) ]
-			copy chunk to quote-char (append item chunk)
-			quote-char
+		either equal? escape-char quote-char [
+			quoted-item: [
+				quote-char 
+				any [ 
+					escape-quote: to quote-char quote-char any whitespace sep-char :escape-quote break
+				|	copy chunk to escaped-quote escaped-quote (repend item [chunk quote-char]) 
+				]
+				copy chunk to quote-char (append item chunk)
+				quote-char
+			]			
+		][ ; quote-char and escape-char are not equal
+			quoted-item: [
+				quote-char 
+				any [ copy chunk to escaped-quote escaped-quote (repend item [chunk quote-char]) ]
+				copy chunk to quote-char (append item chunk)
+				quote-char
+			]						
 		]
-	] [
+	][ ; No escape char
 		quoted-item: [quote-char copy item to quote-char quote-char]
 	]
 	match-item: [
