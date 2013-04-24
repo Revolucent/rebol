@@ -19,12 +19,15 @@ REBOL [
 	Name: net.revolucent.parse.csv
 	Version: 3.0.0
 	Type: module
-	Exports: [csv csv-object csv-block csv-fields parse-csv-file]
+	Exports: [csv csv-object csv-block csv-fields read-csv-file]
 	Needs: [
 		2.101.0 
 		http://rebol.revolucent.net/net.revolucent.core.v3.r3
 	]	
 	License: MIT
+	History: [
+		2013-04-24 {Renamed PARSE-CSV to READ-CSV in anticipation of WRITE-CSV}
+	]
 ]
 
 csv-fields: closure [
@@ -43,7 +46,7 @@ csv-fields: closure [
 ; First, let's look at a usage of CSV without using CSV-OBJECT.
 ;
 ; csv/by [
-; 	probe parse-csv {"Music For The Masses",88}
+; 	probe read-csv {"Music For The Masses",88}
 ; ] funct [items] [
 ; 	object [
 ;		name: items/1
@@ -55,7 +58,7 @@ csv-fields: closure [
 ; creates an object. This gets pretty tedious when there are many columns, so:
 ;
 ; csv/by [
-;	probe parse-csv {"Music For The Masses",88}
+;	probe read-csv {"Music For The Masses",88}
 ; ] csv-object [name year]
 ;
 ; CSV-OBJECT returns a dynamically created function that maps the first
@@ -123,12 +126,12 @@ csv-block: closure [
 ; a single row of CSV input according to the given settings. E.g.,
 ;
 ; csv/with-separator [
-; 	probe parse-csv {a~b}
+; 	probe read-csv {a~b}
 ; ] #"~"
 ;
 ; The PARSE-CSV function is valid only within the given block. This will not work:
 ;
-; csv [] probe parse-csv {a,b}
+; csv [] probe read-csv {a,b}
 ;
 ; (Unless of course someone has defined a different PARSE-CSV outside of this module.)
 csv: funct [
@@ -184,18 +187,18 @@ csv: funct [
 		(append items item)
 	]	
 	
-	use [parse-csv] [
-		parse-csv: func [
+	use [read-csv] [
+		read-csv: func [
 			line [string!]
 		][
 			items: copy []
 			either parse line rules [transform items] [do make error! rejoin ["Invalid line: " line]]
 		]
-		do bind body 'parse-csv
+		do bind body 'read-csv
 	]
 ]
 
-parse-csv-file: funct [
+read-csv-file: funct [
 	file [file!]
 	/headers "First row is header row"
 	/with-separator
@@ -214,7 +217,7 @@ parse-csv-file: funct [
 		items: copy []
 		foreach line read/lines file [
 			unless header [
-				append/only items parse-csv line
+				append/only items read-csv line
 			]
 			header: false
 		]
