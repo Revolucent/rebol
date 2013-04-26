@@ -26,7 +26,7 @@ REBOL [
 	]	
 	License: MIT
 	History: [
-		2013-04-24 {Renamed PARSE-CSV to READ-CSV in anticipation of WRITE-CSV. Fixed a bug that occurs when the escape-char and quote-char are the same.}
+		2013-04-24 {Renamed parse-csv to READ-CSV in anticipation of WRITE-CSV. Fixed a bug that occurs when the escape-char and quote-char are the same.}
 	]
 ]
 
@@ -122,27 +122,27 @@ csv-block: closure [
 
 ; CSV creates an environment in which CSV operations can be performed by, for
 ; instance, setting the quote character or the separator, etc. It then injects
-; the PARSE-CSV function into the provided block. PARSE-CSV will parse
+; the parse-csv function into the provided block. parse-csv will parse
 ; a single row of CSV input according to the given settings. E.g.,
 ;
-; csv/with-separator [
+; csv/sep [
 ; 	probe read-csv {a~b}
 ; ] #"~"
 ;
-; The PARSE-CSV function is valid only within the given block. This will not work:
+; The parse-csv function is valid only within the given block. This will not work:
 ;
 ; csv [] probe read-csv {a,b}
 ;
-; (Unless of course someone has defined a different PARSE-CSV outside of this module.)
+; (Unless of course someone has defined a different parse-csv outside of this module.)
 csv: funct [
-	"Provides a context in which the PARSE-CSV function can operate on CSV rows."
+	"Provides a context in which the parse-csv function can operate on CSV rows."
 	body [block!]
-	/with-separator
+	/sep
 		sep-char [char!]
-	/with-quote
+	/quote
 		quote-char [char!]
-	/with-escape
-		escape-char [char!] "Defaults to none" ; I.e., assume quotes are never escaped	
+	/escape
+		escape-char [char!] "Defaults to NONE"
 	/by
 		transform [any-function!] "Transform a row into e.g. an object"
 	/local
@@ -153,16 +153,17 @@ csv: funct [
 	default transform :identity
 	
 	whitespace-chars: copy " ^-"
-	remove-each char whitespace-chars [any [equal? sep-char char equal? quote-char char]]
+	remove-each char whitespace-chars [any [equal? sep-char char equal? quote-char char equal? escape-char char]]
 	whitespace: charset whitespace-chars
 	characters: complement charset rejoin [whitespace-chars sep-char quote-char]
+	
 	either escape-char [ ; If we have an escape char our quoted-item becomes much more complex
 		escaped-quote: rejoin [escape-char quote-char]
 		either equal? escape-char quote-char [
 			quoted-item: [
 				quote-char 
 				any [ 
-					escape-quote: to quote-char quote-char any whitespace sep-char :escape-quote break
+					escape: thru quote-char any whitespace sep-char :escape break
 				|	copy chunk to escaped-quote escaped-quote (repend item [chunk quote-char]) 
 				]
 				copy chunk to quote-char (append item chunk)
@@ -179,12 +180,14 @@ csv: funct [
 	][ ; No escape char
 		quoted-item: [quote-char copy item to quote-char quote-char]
 	]
+	
 	match-item: [
 		(item: copy "")
 		any whitespace
 		opt [quoted-item | copy item some characters]
 		any whitespace
 	]
+	
 	rules: [
 		any [
 			match-item
@@ -210,11 +213,11 @@ csv: funct [
 read-csv-file: funct [
 	file [file!]
 	/headers "First row is header row"
-	/with-separator
+	/sep
 		sep-char [char!]
-	/with-quote
+	/quote
 		quote-char [char!]
-	/with-escape
+	/escape
 		escape-char [char!] "Defaults to none" ; I.e., assume quotes are never escaped	
 	/by
 		transform [any-function!] "Transform a row into e.g. an object"
@@ -233,5 +236,5 @@ read-csv-file: funct [
 		items
 	]
 	
-	apply :csv [body with-separator sep-char with-quote quote-char with-escape escape-char by :transform]
+	apply :csv [body sep sep-char quote quote-char escape escape-char by :transform]
 ]
