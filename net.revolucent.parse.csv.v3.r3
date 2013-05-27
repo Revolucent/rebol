@@ -135,70 +135,63 @@ csv-block: closure [
 ;
 ; (Unless of course someone has defined a different parse-csv outside of this module.)
 csv: funct [
-	"Provides a context in which the parse-csv function can operate on CSV rows."
 	body [block!]
-	/sep
-		sep-char [char!]
+	/separator
+		separator-char [char!]
 	/quote
 		quote-char [char!]
 	/escape
-		escape-char [char!] "Defaults to NONE"
+		escape-char [char!]
 	/by
-		transform [any-function!] "Transform a row into e.g. an object"
+		transform [any-function!]
 	/local
-		chunk [string!]
+		chunk
+		item
 ][
+	default escape-char #"\"
 	default quote-char #"^""
-	default sep-char #","
+	default separator-char #","
 	default transform :identity
 	
-	whitespace-chars: copy " ^-"
-	remove-each char whitespace-chars [any [equal? sep-char char equal? quote-char char equal? escape-char char]]
+	replace whitespace-chars: copy " ^-" separator-char ""
+	replace whitespace-chars quote-char ""
+	replace whitespace-chars escape-char ""
 	whitespace: charset whitespace-chars
-	characters: complement charset rejoin [whitespace-chars sep-char quote-char]
+	non-separator-chars: complement charset separator-char
+	non-quote-chars: complement charset quote-char
+	escaped-quote: rejoin [escape-char quote-char]
 	
-	either escape-char [ ; If we have an escape char our quoted-item becomes much more complex
-		escaped-quote: rejoin [escape-char quote-char]
-		either equal? escape-char quote-char [
-			quoted-item: [
-				quote-char 
-				any [ 
-					escape: thru quote-char any whitespace sep-char :escape break
-				|	copy chunk to escaped-quote escaped-quote (repend item [chunk quote-char]) 
-				]
-				copy chunk to quote-char (append item chunk)
-				quote-char
-			]			
-		][ ; quote-char and escape-char are not equal
-			quoted-item: [
-				quote-char 
-				any [ copy chunk to escaped-quote escaped-quote (repend item [chunk quote-char]) ]
-				copy chunk to quote-char (append item chunk)
-				quote-char
-			]						
-		]
-	][ ; No escape char
-		quoted-item: [quote-char copy item to quote-char quote-char]
-	]
-	
-	match-item: [
-		(item: copy "")
-		any whitespace
-		opt [quoted-item | copy item some characters]
-		any whitespace
-	]
-	
-	rules: [
-		any [
-			match-item
-			sep-char
+	items: copy []
+	non-quoted-item: [copy item any non-separator-chars (append items item)]
+	escaped-quote: rejoin [escape-char quote-char]
+	either equal? escape-char quote-char [
+		quoted-item: [
+			any whitespace
+			quote-char 
+			any [ 
+				escape: thru quote-char any whitespace separator-char :escape break
+			|	copy chunk to escaped-quote escaped-quote (repend item [chunk quote-char]) 
+			]
+			copy chunk to quote-char (append item chunk)
+			quote-char
 			(append items item)
-		]
-		match-item
-		end
-		(append items item)
-	]	
+			any whitespace
+		]			
+	][ ; quote-char and escape-char are not equal
+		quoted-item: [
+			any whitespace
+			quote-char 
+			any [ copy chunk to escaped-quote escaped-quote (repend item [chunk quote-char]) ]
+			copy chunk to quote-char (append item chunk)
+			quote-char
+			(append items item)
+			any whitespace
+		]						
+	]
 	
+	item-rule: [[(item: copy "") quoted-item | non-quoted-item]] 
+	rules: [item-rule any [separator-char item-rule] end]
+
 	use [read-csv] [
 		read-csv: func [
 			line [string!]
