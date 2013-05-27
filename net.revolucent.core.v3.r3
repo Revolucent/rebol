@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [attempt-to identity none-if-empty transform-unless-empty]
+	Exports: [^ attempt-to identity none-if-empty transform-unless-empty]
 	Needs: [2.101.0]	
 	License: MIT	
 ]
@@ -37,6 +37,15 @@ none-if-empty: func [
 	series [series!]
 ] [
 	either empty? series [none] [series]
+]
+
+^: funct [
+	spec [block!]
+	/local
+		f-spec f-body
+][
+	parse [copy f-spec to '| '| copy f-body to end]
+	funct f-spec f-body
 ]
 
 ; Necessitated by net.revolucent.parse.csv but could be more generally useful.
