@@ -19,14 +19,29 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ attempt-to identity none-if-empty transform-unless-empty]
+	Exports: [^ attempt-to identity none-if-empty symbol transform-unless-empty]
 	Needs: [2.101.0]	
 	License: MIT	
 ]
 
 identity: func [o] [o]
 
+symbol: func [
+	"Turns the given word(s) into symbol(s), i.e., self-referential word(s)"
+	'words [word! block!] "Word or block of words"
+][
+	either word? words [
+		set words words
+	][
+		foreach word words [
+			symbol :word
+		]
+	]
+	words
+]
+
 attempt-to: closure [
+	"Returns a fuction that attempts to convert a value to the given type"
 	datatype [datatype!]
 ][
 	func [val] [attempt [to datatype val]]
@@ -39,13 +54,17 @@ none-if-empty: func [
 	either empty? series [none] [series]
 ]
 
-^: funct [
-	spec [block!]
+^: func [
+	"Lambda, e.g., ^[ x | x + 1 ]"
+	lambda [block!]
 	/local
-		f-spec f-body
+		f-spec
+		f-body
 ][
-	parse [copy f-spec to '| '| copy f-body to end]
-	funct f-spec f-body
+	unless parse lambda [copy f-spec to '| '| copy f-body to end] [
+		do make error! rejoin ["Invalid lambda: " mold/flat lambda]
+	]
+	func f-spec f-body
 ]
 
 ; Necessitated by net.revolucent.parse.csv but could be more generally useful.
