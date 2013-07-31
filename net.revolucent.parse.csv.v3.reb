@@ -22,7 +22,7 @@ REBOL [
 	Exports: [csv csv-object csv-block csv-fields read-csv-file]
 	Needs: [
 		2.101.0 
-		http://rebol.revolucent.net/net.revolucent.core.v3.r3
+		'net.revolucent.core.v3
 	]	
 	License: MIT
 	History: [
