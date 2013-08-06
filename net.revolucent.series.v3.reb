@@ -37,8 +37,8 @@ intersperse: funct [
 ][
 	default result make type? series []
 	foreach elem series [
-		if (length? result) > 0 [apply :append [series :value false none only]]
-		append/only series :elem
+		if (length? result) > 0 [apply :append [result :value false none only]]
+		append/only result :elem
 	]
 	result
 ]
