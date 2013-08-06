@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.parse.csv
 	Version: 3.0.0
 	Type: module
-	Exports: [intersperse range]
+	Exports: [fmap intersperse range]
 	Needs: [
 		2.101.0 
 		net.revolucent.core.v3
@@ -77,3 +77,17 @@ range: funct [
 	][result]
 ]
 
+fmap: funct [
+	"Performs map using a function."
+	f [any-function!]
+	series [series!]
+	/only
+	/into
+		result [series!]
+][
+	default result make type? series []
+	foreach elem series [
+		apply :append [result f :elem false none only]
+	]
+	result
+]
