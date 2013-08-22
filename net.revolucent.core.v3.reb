@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ attempt-to identity none-if-empty symbol transform-unless-empty]
+	Exports: [^ attempt-to identity none-if-empty symbol transform-unless-empty log]
 	Needs: [2.101.0]	
 	License: MIT	
 ]
@@ -82,3 +82,25 @@ transform-unless-empty: closure [
 		]
 	]
 ]
+
+logging: off
+
+log: funct [
+	"Alias for PRINT used for logging. Enable with log/set on."
+	value
+	/set "Use to turn logging on or off"
+	/with
+		logger "Function to use for logging. Defaults to PRINT."
+][
+	default logger :print
+	case [
+		set [
+			logging: true? :value
+		]
+		logging [
+			; When stderr becomes available, we'll use that instead
+			logger :value
+		]
+	]
+]
+
