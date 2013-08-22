@@ -85,7 +85,7 @@ transform-unless-empty: closure [
 
 logging: off
 
-log: funct [
+log: func [
 	"Alias for PRINT used for logging. Enable with log/set on."
 	value
 	/set "Use to turn logging on or off"
@@ -93,6 +93,7 @@ log: funct [
 		logger "Function to use for logging. Defaults to PRINT."
 ][
 	default logger :print
+	assert [any-function? :logger]
 	case [
 		set [
 			logging: true? :value
@@ -104,3 +105,4 @@ log: funct [
 	]
 ]
 
+protect/hide 'logging
