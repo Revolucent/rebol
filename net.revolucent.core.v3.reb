@@ -19,12 +19,12 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ attempt-to identity none-if-empty symbol transform-unless-empty log]
+	Exports: [^ ^^ attempt-to identity none-if-empty symbol transform-unless-empty log]
 	Needs: [2.101.0]	
 	License: MIT	
 ]
 
-identity: func [o] [o]
+identity: func [o] [:o]
 
 symbol: func [
 	"Turns the given word(s) into symbol(s), i.e., self-referential word(s)"
@@ -44,7 +44,7 @@ attempt-to: closure [
 	"Returns a fuction that attempts to convert a value to the given type"
 	datatype [datatype!]
 ][
-	func [val] [attempt [to datatype val]]
+	func [val] [attempt [to datatype :val]]
 ]
 
 none-if-empty: func [
@@ -54,17 +54,34 @@ none-if-empty: func [
 	either empty? series [none] [series]
 ]
 
-^: func [
-	"Lambda, e.g., ^[ x | x + 1 ]"
-	lambda [block!]
+lambda: func [
+	"Lambda, e.g., ^[ x | x + 1 ]."
+	spec [block!]
+	/with
+		func-maker "E.g., func, funct, closure"
 	/local
 		f-spec
 		f-body
 ][
-	unless parse lambda [copy f-spec to '| '| copy f-body to end] [
-		do make error! rejoin ["Invalid lambda: " mold/flat lambda]
+	default func-maker :func
+	unless parse spec [copy f-spec to '| '| copy f-body to end] [
+		do make error! rejoin ["Invalid lambda: " mold/flat spec]
 	]
-	func f-spec f-body
+	func-maker f-spec f-body
+]
+
+^: func [
+	"Lambda, e.g., ^[ x | x + 1 ]"
+	spec [block!]
+][
+	lambda spec
+]
+
+^^: func [
+	"Lambda, e.g., ^[ x | x + 1 ]"
+	spec [block!]
+][
+	lambda/with spec :funct
 ]
 
 ; Necessitated by net.revolucent.parse.csv but could be more generally useful.

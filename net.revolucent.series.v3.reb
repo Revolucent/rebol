@@ -78,14 +78,17 @@ range: funct [
 ]
 
 fmap: funct [
-	"Performs map using a function."
-	f [any-function!]
+	"Performs map using a function or get-path."
+	f [any-function! get-path!]
 	series [series!]
 	/only
 	/into
 		result [series!]
 ][
 	default result make type? series []
+	if get-path? :f [
+		f: lambda compose [ arg | (f) arg ]
+	]
 	foreach elem series [
 		apply :append [result f :elem false none only]
 	]
