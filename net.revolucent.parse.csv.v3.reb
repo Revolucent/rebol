@@ -192,14 +192,11 @@ csv: funct [
 	item-rule: [[(item: copy "") quoted-item | non-quoted-item]] 
 	rules: [item-rule any [separator-char item-rule] end]
 
-	use [read-csv] [
-		read-csv: func [
-			line [string!]
-		][
-			items: copy []
-			either parse line rules [transform items] [do make error! rejoin ["Invalid line: " line]]
-		]
-		do bind body 'read-csv
+	do func [read-csv] body func [
+		line [string!]
+	][
+		items: copy [] ; This variable's scope is CSV, not READ-CSV. It is used inside the PARSE rules.
+		either parse line rules [transform items] [do make error! rejoin ["Invalid line: " line]]
 	]
 ]
 

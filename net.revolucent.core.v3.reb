@@ -14,14 +14,14 @@
 
 REBOL [
 	Author: "Gregory Higley"
-	Title: "Revolucent CSV Library"
+	Title: "Revolucent Core Library"
 	Date: 2013-04-23
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ ^^ attempt-to identity none-if-empty symbol transform-unless-empty log]
+	Exports: [^ ^^ attempt-to identity none-if-empty symbol transform-unless-empty strive log]
 	Needs: [2.101.0]	
-	License: MIT	
+	License: MIT
 ]
 
 identity: func [o] [:o]
@@ -96,6 +96,76 @@ transform-unless-empty: closure [
 			does [:default-value]
 		][
 			transform series
+		]
+	]
+]
+
+comment [
+	{REBOL errors have a TYPE and an ID which serves
+	to distinguish them from other errors, but all
+	are of the common type ERROR!. Error handling
+	with REBOL's TRY/EXCEPT forces the programmer
+	to deal with TYPEs and IDs inside of the single
+	exception handling block. This is fine in most
+	cases. In cases where it's not, this function
+	cleanly handles REBOL errors by TYPE and ID,
+	as follows:}
+
+	strive [
+		to pair! "bob" ; Generates an error of type SCRIPT with id BAD-MAKE-ARGS.
+	] e [
+		script bad-make-args [ ; Handles errors of type SCRIPT id BAD-MAKE-ARGS.
+			print "Uh-oh!"
+		]
+		script [ ; Handles errors of type MATH regardless of id.
+			print "A script error occurred!"
+		]
+		[ ; Handles anything not already handled.
+			print e
+		]
+	]
+	
+	{If the /ALL refinement is used, all matching handlers
+	are run, not just the first one.}
+
+	{Why is it called STRIVE? Because no other good synonyms for TRY
+	were left. REBOL already uses TRY and ATTEMPT. My third choice,
+	CATCH, is also already used. I thought about EXCEPT but it emphasizes
+	the exception handling portion, though really the BODY block is
+	what we're trying to get done.}
+]
+
+strive: funct [
+	"Handles exceptions by type and id."
+	body [block!]
+	'e [word!] "Word used to represent the error"
+	handlers [block!] "Block of handlers"
+	/all
+][
+	try/except body funct [err] [
+		error-handlers: copy []
+		assert [parse handlers [
+			any [                  
+				(type: id: handler: none)
+				opt [set type word!]
+				opt [set id word!]
+				set handler block! (
+					type: any [type err/type]
+					id: any [id err/id]
+					if lib/all [
+						equal? type err/type
+						equal? id err/id
+					][
+						if any [all empty? error-handlers] [
+							append/only error-handlers handler
+						]
+					]
+				)
+			]
+			end
+		]]
+		foreach error-handler error-handlers [
+			do func reduce [e] error-handler err
 		]
 	]
 ]
