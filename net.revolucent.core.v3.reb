@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ ^^ attempt-to identity none-if-empty symbol transform-unless-empty strive log]
+	Exports: [^ ^^ attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry . do.]
 	Needs: [2.101.0]	
 	License: MIT
 ]
@@ -84,6 +84,75 @@ lambda: func [
 	lambda/with spec :funct
 ]
 
+rcurry: funct [
+	body [block!]
+	/with
+		'word [word!]
+][
+	default word to word! random "&*^^!mxyz"
+	func reduce [word] append copy body word
+]       
+
+curry: :rcurry
+
+lcurry: funct [
+	body [block!]
+	/with
+		'word [word!]
+][
+	default word to word! random "&*^^!mxyz"
+	func reduce [word] insert copy body word
+]       
+
+test-any: funct [
+	test [any-function!]
+	items [series!]
+	/only
+][
+	unless only [items: reduce items]
+	foreach item items [
+		if test item [return true]
+	]
+	false
+]
+
+test-all: funct [
+	test [any-function!]
+	items [series!]
+	/only
+][                     
+	unless only [items: reduce items]
+	result: true
+	foreach item items [unless result: result and test item [return result]]
+	result
+]
+
+.: closure [
+	fs [block!]
+	/only
+][
+	unless only [fs: reduce fs]
+	fs: reverse copy fs
+	func [arg] [
+		foreach f fs [
+			arg: case [
+				any-function? :f [f :arg]
+				block? :f [do curry f :arg]
+			]
+		]
+		:arg
+	]
+]
+
+do.: funct [
+	fs [block!]
+	arg
+	/only
+][
+	do apply :. [fs only] :arg
+]
+
+
 ; Necessitated by net.revolucent.parse.csv but could be more generally useful.
 transform-unless-empty: closure [
 	"Returns a function that applies TRANSFORM to any non-empty series."
@@ -98,6 +167,21 @@ transform-unless-empty: closure [
 			transform series
 		]
 	]
+]
+
+ensure: funct [
+	body [block!]
+	finally [block!]
+	/local
+		result
+][
+	error: none
+	set/any 'result try/except body func [e] [
+		error: e
+	]
+	do finally ; If an error happens here, all bets are off
+	if error [do error]
+	either value? 'result [:result] [exit]
 ]
 
 comment [
@@ -117,7 +201,7 @@ comment [
 		script bad-make-args [ ; Handles errors of type SCRIPT id BAD-MAKE-ARGS.
 			print "Uh-oh!"
 		]
-		script [ ; Handles errors of type MATH regardless of id.
+		script [ ; Handles errors of type SCRIPT regardless of id.
 			print "A script error occurred!"
 		]
 		[ ; Handles anything not already handled.
@@ -141,8 +225,11 @@ strive: funct [
 	'e [word!] "Word used to represent the error"
 	handlers [block!] "Block of handlers"
 	/all
+	/finally
+		finally-block [block!]
 ][
-	try/except body funct [err] [
+	try-body: either finally [[ensure body finally-block]] [body]
+	try/except try-body func [err] [
 		error-handlers: copy []
 		assert [parse handlers [
 			any [                  
@@ -164,6 +251,7 @@ strive: funct [
 			]
 			end
 		]]
+		if empty? error-handlers [do err]
 		foreach error-handler error-handlers [
 			do func reduce [e] error-handler err
 		]
@@ -193,3 +281,4 @@ log: func [
 ]
 
 protect/hide 'logging
+
