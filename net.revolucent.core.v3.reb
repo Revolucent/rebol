@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ ^^ attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry . do.]
+	Exports: [^ ^^ attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry . do. test-any test-all]
 	Needs: [2.101.0]	
 	License: MIT
 ]
