@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ ^^ attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry . do. test-any test-all]
+	Exports: [^ ^^ attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry l^ r^ . do. test-any test-all]
 	Needs: [2.101.0]	
 	License: MIT
 ]
@@ -94,6 +94,7 @@ rcurry: funct [
 ]       
 
 curry: :rcurry
+r^: :rcurry
 
 lcurry: funct [
 	body [block!]
@@ -103,6 +104,8 @@ lcurry: funct [
 	default word to word! random "&*^^!mxyz"
 	func reduce [word] insert copy body word
 ]       
+
+l^: :lcurry
 
 test-any: funct [
 	test [any-function!]
