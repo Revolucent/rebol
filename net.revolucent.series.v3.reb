@@ -87,7 +87,7 @@ fmap: funct [
 ][
 	default result make type? series []
 	if get-path? :f [
-		f: lambda compose [ arg | (f) arg ]
+		f: ^ compose [ arg | (f) arg ]
 	]
 	foreach elem series [
 		apply :append [result f :elem false none only]
