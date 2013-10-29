@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.parse.csv
 	Version: 3.0.0
 	Type: module
-	Exports: [fmap intersperse range]
+	Exports: [fmap intersperse range filter]
 	Needs: [
 		2.101.0 
 		net.revolucent.core.v3
@@ -94,3 +94,15 @@ fmap: funct [
 	]
 	result
 ]
+
+filter: funct [
+	"Filters a series using the TEST function. (Modifies)"
+	test [any-function!]
+	series [series!]
+][
+	remove-each elem series [
+		! test elem
+	]
+	series
+]
+
