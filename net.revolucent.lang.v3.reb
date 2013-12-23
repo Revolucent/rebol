@@ -42,14 +42,14 @@ make-get: funct [
 ]
 
 make-choice: does [
-	object compose/deep [
+	object [
 		parent: none
 		sub-actions: copy []
                 add-action: func [
 			action [object!]
 		][
 			action/parent: self
-			loop (current-weight) [
+			loop current-weight [
 				append sub-actions action
 			]
 		]
