@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ ^^ ^~ attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry l^ r^ . do. test-any test-all]
+	Exports: [^ ^^ ^~ attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry l^ r^ . do. test-any test-all using]
 	Needs: [2.101.0]	
 	License: MIT
 ]
@@ -291,4 +291,41 @@ log: func [
 ]
 
 protect/hide 'logging
+
+using: funct [
+	"Resource protection, analogous to C#'s USING construct."
+	'word [word! block!]
+	body [block!]
+	/close-by
+		'closer [word! block!]
+	/local
+		result
+][
+	either word? word [
+		; word is a word, and its value is our object.
+		o: get :word
+	][
+		; word is a block, assumed to consist of any-word! followed by
+		; an expression which will evaluate to our object.
+		o: first reduce next word
+		word: first word
+		; If word is a get-word!, we dereference it before assigning it.
+		word: either get-word? word [get :word] [to word! word]
+	]
+	default closer 'close
+	fclose: either word? closer [
+		close: any [get in o closer get in o 'close get in o 'dispose]
+		if :close [func reduce [word] [close]]
+	][
+		func reduce [word] closer
+	]
+	do-close: does [if :fclose [fclose o]]
+	f: func reduce [word] body
+	set/any 'result try/except [f o] func [e] [
+		do-close
+		do e
+	]
+	do-close
+	either value? 'result [:result] [exit]
+]
 
