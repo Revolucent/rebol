@@ -80,11 +80,14 @@ range: funct [
 transform: funct [
 	"Performs map using a function, get-path, or lambda block with implicit _."
 	f [any-function! get-path! block!]
-	series [series!]
+	series [series! integer!]
 	/only
 	/into
 		result [series!]
 ][
+  if integer? series [
+    series: either series > 0 [range compose [1 - (series)]] [copy []]
+  ]
 	default result make type? series []
   case [
     get-path? :f [f: ^ compose [ arg | (f) arg ]]
