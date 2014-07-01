@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ ^^ ^~ attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry l^ r^ . do. test-any test-all using]
+	Exports: [^ ^^ ^~ ^_ attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry l^ r^ . do. test-any test-all using]
 	Needs: [2.101.0]	
 	License: MIT
 ]
@@ -71,7 +71,7 @@ lambda: func [
 ]
 
 ^: func [
-	"Lambda, e.g., ^[ x | x + 1 ]"
+	"Lambda, e.g., ^^[ x | x + 1 ]"
 	spec [block!]
 ][
 	lambda spec
@@ -84,8 +84,15 @@ lambda: func [
 	func [~] body
 ]
 
+^_: func [
+  "Lambda in which _ represents the bound variable."
+  body [block!]
+][
+  func [_] body
+]
+
 ^^: func [
-	"Lambda, e.g., ^[ x | x + 1 ]"
+	"Lambda, e.g., ^^[ x | x + 1 ]"
 	spec [block!]
 ][
 	lambda/with spec :funct
@@ -115,10 +122,11 @@ lcurry: funct [
 l^: :lcurry
 
 test-any: funct [
-	test [any-function!]
+	test [any-function! block!]
 	items [series!]
 	/only
 ][
+  if block? :test [test: ^_ test]
 	unless only [items: reduce items]
 	foreach item items [
 		if test item [return true]
@@ -131,6 +139,7 @@ test-all: funct [
 	items [series!]
 	/only
 ][                     
+  if block? :test [test: ^_ test]
 	unless only [items: reduce items]
 	result: true
 	foreach item items [unless result: result and test item [return result]]

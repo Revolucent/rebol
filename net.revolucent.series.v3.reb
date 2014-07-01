@@ -78,17 +78,18 @@ range: funct [
 ]
 
 fmap: funct [
-	"Performs map using a function or get-path."
-	f [any-function! get-path!]
+	"Performs map using a function, get-path, or lambda block with implicit _."
+	f [any-function! get-path! block!]
 	series [series!]
 	/only
 	/into
 		result [series!]
 ][
 	default result make type? series []
-	if get-path? :f [
-		f: ^ compose [ arg | (f) arg ]
-	]
+  case [
+    get-path? :f [f: ^ compose [ arg | (f) arg ]]
+    block? :f [f: ^_ f]
+  ]
 	foreach elem series [
 		apply :append [result f :elem false none only]
 	]
@@ -97,9 +98,10 @@ fmap: funct [
 
 filter: funct [
 	"Filters a series using the TEST function. (Modifies)"
-	test [any-function!]
+	test [any-function! block!]
 	series [series!]
 ][
+  if block? :test [test: ^_ test]
 	remove-each elem series [
 		! test elem
 	]
