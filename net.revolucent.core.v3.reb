@@ -101,8 +101,8 @@ lambda: func [
   /local
     spec
 ][
-  assert [arg-count >= 0]
   default arg-count 1
+  assert [arg-count >= 0]
   spec: copy []
   case [
     (arg-count = 1) [
