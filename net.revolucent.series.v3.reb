@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.parse.csv
 	Version: 3.0.0
 	Type: module
-	Exports: [fmap intersperse range filter fold]
+	Exports: [fmap intersperse range filter fold transform]
 	Needs: [
 		2.101.0 
 		net.revolucent.core.v3
@@ -77,7 +77,7 @@ range: funct [
 	][result]
 ]
 
-fmap: funct [
+transform: funct [
 	"Performs map using a function, get-path, or lambda block with implicit _."
 	f [any-function! get-path! block!]
 	series [series!]
@@ -95,6 +95,9 @@ fmap: funct [
 	]
 	result
 ]
+
+; Deprecated alias for transform
+fmap: :transform
 
 filter: funct [
 	"Filters a series using the TEST function. (Modifies)"
