@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.parse.csv
 	Version: 3.0.0
 	Type: module
-	Exports: [fmap intersperse range filter]
+	Exports: [fmap intersperse range filter fold]
 	Needs: [
 		2.101.0 
 		net.revolucent.core.v3
@@ -108,3 +108,18 @@ filter: funct [
 	series
 ]
 
+fold: funct [
+  f [any-function! block!]
+  series [series!]
+  /start
+    accum
+][
+  if block? :f [f: ^_2 f]
+  unless empty? series [
+    default accum first+ series
+    while [! tail? series] [
+      accum: f accum first+ series
+    ]
+  ]
+  :accum
+]

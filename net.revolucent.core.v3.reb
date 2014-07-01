@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ ^^ ^~ ^_ flip attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry l^ r^ . do. test-any test-all using]
+	Exports: [^ ^^ ^~ ^_ ^_2 ^_3 flip attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry l^ r^ . do. test-any test-all using]
 	Needs: [2.101.0]	
 	License: MIT
 ]
@@ -96,9 +96,29 @@ lambda: func [
 ^_: func [
   "Lambda in which _ represents the bound variable."
   body [block!]
+  /args
+    arg-count [integer!]
+  /local
+    spec
 ][
-  func [_] body
+  assert [arg-count >= 0]
+  default arg-count 1
+  spec: copy []
+  case [
+    (arg-count = 1) [
+      append spec '_
+    ]
+    'else [
+      for a 1 arg-count 1 [
+        append spec to word! ajoin ["_" a]
+      ]
+    ]
+  ]
+  func spec body
 ]
+
+^_2: func [body [block!]] [^_/args body 2]
+^_3: func [body [block!]] [^_/args body 3]
 
 ^^: func [
 	"Lambda, e.g., ^^[ x | x + 1 ]"
