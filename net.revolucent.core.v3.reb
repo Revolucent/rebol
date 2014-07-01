@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.core
 	Version: 0.9.0
 	Type: module
-	Exports: [^ ^^ ^~ ^_ attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry l^ r^ . do. test-any test-all using]
+	Exports: [^ ^^ ^~ ^_ fswap attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry l^ r^ . do. test-any test-all using]
 	Needs: [2.101.0]	
 	License: MIT
 ]
@@ -38,6 +38,15 @@ symbol: func [
 		]
 	]
 	words
+]
+
+fswap: funct [
+  "Calls the function with the order of the arguments swapped."
+  f [any-function!]
+  arg1
+  arg2
+][
+  f arg2 arg1
 ]
 
 attempt-to: closure [
