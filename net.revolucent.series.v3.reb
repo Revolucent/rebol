@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.parse.csv
 	Version: 3.0.0
 	Type: module
-	Exports: [fmap intersperse range filter fold transform]
+	Exports: [fmap intersperse range filter fold proper-case transform]
 	Needs: [
 		2.101.0 
 		net.revolucent.core.v3
@@ -128,4 +128,10 @@ fold: funct [
     ]
   ]
   :accum
+]
+
+proper-case: funct [
+  string [string!]
+][
+  form transform [uppercase/part lowercase _ 1] parse string none
 ]
