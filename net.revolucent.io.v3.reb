@@ -32,11 +32,12 @@ for-dir: funct [
 	/recurse "Recurse into subdirectories"
 	/only "Do not execute BODY for directories"
 	/with
-		options [block!] "Additional options"
+		'options [word! block!] "Additional options"
 ][
 	assert [dir? dir]
 	default options copy []
 	process: func reduce [word] body
+  if ! block? options [options: reduce [options]]
 	skip-hidden: find options 'skip-hidden
 	iterate: func [
 		dir [file!]
