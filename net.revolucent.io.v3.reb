@@ -16,7 +16,7 @@ REBOL [
 	Author: "Gregory Higley"
 	Title: "Revolucent IO Library"
 	Date: 2013-09-10
-	Name: net.revolucent.core
+	Name: net.revolucent.io
 	Version: 3.0.0
 	Type: module
 	Exports: [for-dir]

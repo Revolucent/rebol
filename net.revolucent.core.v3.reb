@@ -17,7 +17,7 @@ REBOL [
 	Title: "Revolucent Core Library"
 	Date: 2013-04-23
 	Name: net.revolucent.core
-	Version: 0.9.0
+	Version: 3.0.0
 	Type: module
 	Exports: [^ ^^ ^~ ^_ ^_2 ^_3 flip attempt-to identity none-if-empty symbol transform-unless-empty ensure strive log rcurry curry lcurry l^ r^ . do. test-any test-all using]
 	Needs: [2.101.0]	
