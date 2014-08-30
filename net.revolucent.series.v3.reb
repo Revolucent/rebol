@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.parse.csv
 	Version: 3.0.0
 	Type: module
-	Exports: [fmap intersperse range filter fold proper-case transform]
+	Exports: [enumerator fmap intersperse range filter fold proper-case transform]
 	Needs: [
 		2.101.0 
 		net.revolucent.core.v3
@@ -134,4 +134,50 @@ proper-case: funct [
   string [string!]
 ][
   form transform [uppercase/part lowercase _ 1] parse string none
+]
+
+; Usage:
+; fibonacci: enumerator [i j] [
+;   set [i: j:] [0 1]
+;   forever [
+;     set [i: j:] reduce [j i + j]
+;     yield i
+;   ]
+; ]
+;
+; All fibs less than 4 million:
+; print fibonacci n [n < 4'000'000]
+enumerator: closure [
+  "Returns a lazy enumerator."
+  enumerator-locals [block!] "Local words"
+  enumerator-body [block!] "Enumeration block"
+][
+  enumerator-body: copy/deep enumerator-body
+  func [
+    'enumerate-var [word!]
+    enumerate-body [block!]
+    /local
+      enum-callback
+      result
+  ][     
+    result: copy []
+    enum-callback: func reduce [enumerate-var] enumerate-body
+    catch/name [ 
+      use [yield] [
+        yield: func [
+          value      
+        ][
+          either enum-callback :value [
+            append/only result :value
+          ][
+            throw/name result 'end-enumeration
+          ]
+        ]
+        default enumerator-locals []
+        bind enumerator-body 'yield
+        do func compose [/local (enumerator-locals)] enumerator-body
+      ]   
+    ] 'end-enumeration
+    result
+  ]
 ]
