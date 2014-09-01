@@ -146,38 +146,139 @@ proper-case: funct [
 ; ]
 ;
 ; All fibs less than 4 million:
-; print fibonacci n [n < 4'000'000]
+; print fibonacci n [take [n < 4'000'000]]
+; First 20 fibs
+; print fibonacci n [take 20]
+; First 20 even fibs
+; print fibonacci n [where [even? n] take 20]
+; 
+; The enumerator DSL consists of three "functions":
+; where, take, and drop. The final one must always
+; be take, otherwise the results are undefined.
+; Any number of where clauses can precede a take
+; or drop, but once a take or drop has been "satisfied",
+; the where clauses before it are ignored, e.g.;
+;
+; fibonacci n [where [even? n] drop 4 where [odd? n] take 4]
+; This does NOT drop the first 4 even fibs. Instead, it
+; allows only even fibs through, and drops the first 4 of those.
+; Once 4 have been dropped, the drop is "satisfied" and control
+; moves on to the next where expression.
 enumerator: closure [
-  "Returns a lazy enumerator."
-  enumerator-locals [block!] "Local words"
-  enumerator-body [block!] "Enumeration block"
+  "Defines an enumerator"
+  enumerator-locals [block!] "Block of words"
+  enumerator-body [block!] "Body of enumerator"
+  /local
+    enumeration-predicate!
 ][
-  enumerator-body: copy/deep enumerator-body
   func [
-    'enumerate-var [word!]
-    enumerate-body [block!]
+    'enumeration-var [word!]
+    enumeration-predicates [block!]
     /local
-      enum-callback
-      result
-  ][     
-    result: copy []
-    enum-callback: func reduce [enumerate-var] enumerate-body
-    catch/name [ 
-      use [yield] [
-        yield: func [
-          value      
+      enumeration [block!]
+      enumerate [function!]
+      enumeration-predicate! [object!]
+      where-predicate! [object!]
+      take-predicate! [object!]
+      drop-predicate! [object!]
+      predicate [object!]
+      current-predicate [object!]
+      temp-predicate [object!]
+      assign-predicate [block!]
+      where-body
+      take-body
+      take-count
+  ][
+    enumeration-predicate!: object [
+      condition: none
+      next-predicate: none
+    ]
+    where-predicate!: make enumeration-predicate! [
+      eval: func [value] [
+        if condition :value [
+          next-predicate/eval :value
+        ]
+      ]
+    ]
+    take-predicate!: make enumeration-predicate! [
+      eval: func [value] [
+        either condition :value [
+          append enumeration :value
         ][
-          either enum-callback :value [
-            append/only result :value
+          either next-predicate [
+            predicate: next-predicate
+            predicate/eval :value
           ][
-            throw/name result 'end-enumeration
+            throw/name enumeration 'end-enumeration
           ]
         ]
-        default enumerator-locals []
-        bind enumerator-body 'yield
-        do func compose [/local (enumerator-locals)] enumerator-body
-      ]   
-    ] 'end-enumeration
-    result
+      ]
+    ]
+    drop-predicate!: make enumeration-predicate! [
+      count: 0
+      eval: func [value] [
+        case [
+          :condition [
+            unless condition :value [
+              predicate: next-predicate
+              predicate/eval :value
+            ]
+          ]
+          count [
+            either count == 0 [
+              predicate: next-predicate
+              predicate/eval :value
+            ][
+              -- count
+            ]
+          ]
+        ]
+      ]
+    ]
+    assign-predicate: [
+      either current-predicate [
+        current-predicate/next-predicate: temp-predicate
+        current-predicate: temp-predicate
+      ][
+        predicate: current-predicate: temp-predicate
+      ]
+    ]
+    parse enumeration-predicates [
+      any [
+        'where set where-body block! (
+          temp-predicate: make where-predicate! [condition: func reduce [enumeration-var] where-body]
+          do assign-predicate
+        )
+      | 'take set take-body block! (
+          temp-predicate: make take-predicate! [condition: func reduce [enumeration-var] take-body]
+          probe :temp-predicate/condition
+          do assign-predicate
+        )
+      | 'take set take-count integer! (
+          temp-predicate: make take-predicate! [condition: func reduce [enumeration-var] compose [(make paren! [length? enumeration]) < (take-count)]]
+          do assign-predicate
+        )
+      | 'drop set drop-body block! (
+          temp-predicate: make drop-predicate! [condition: func reduce [enumeration-var] drop-body]
+          do assign-predicate
+        )
+      | 'drop set drop-count integer! (
+          temp-predicate: make drop-predicate! [count: drop-count]
+          do assign-predicate
+        )
+      ]
+      end
+    ]
+    enumeration: copy []
+    use [yield] [
+      enumerate: func compose [/local (enumerator-locals)] bind enumerator-body 'yield
+      yield: func [
+        yield-var
+      ][
+        predicate/eval :yield-var
+      ]
+      catch/name [ enumerate ] 'end-enumeration
+    ]
+    enumeration
   ]
 ]
