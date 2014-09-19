@@ -10,7 +10,7 @@
 ; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 ; OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 ; LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
 
 REBOL [
 	Author: "Gregory Higley"
@@ -20,10 +20,16 @@ REBOL [
 	Version: 4.0.0
 	Type: module
 	Exports: [
-    ^ ^filter ^fold ^map ^map-each ^where ~ arity range
+    ^ ^1 ^2 ^3 ^each ^filter ^fold ^map ^map-each ^where ~ arity range refinements-of ^remove-each symbol
   ]
 	Needs: [2.101.0]	
 	License: MIT
+]
+
+symbol: funct [
+  'words [word! block!] 
+][
+  set words words
 ]
 
 parse-lambda: funct [
@@ -45,7 +51,7 @@ parse-lambda: funct [
 arity: funct [
   f [any-function!]
   /with
-    'refinements [any-word! block!]
+    refinements [any-word! block!]
   /local
     word
     arg-rule
@@ -91,7 +97,7 @@ arity: funct [
   ]
   either block? :body [
     either arg-count = 1 [
-      func [_ /locals _1] compose [_1: _ (body)]
+      func [_ /local _1] compose [_1: _ (body)]
     ][
       func do make-spec body
     ]
@@ -110,12 +116,31 @@ arity: funct [
   ]
 ]
 
+for n 1 3 1 [
+  do bind/set/copy compose/deep [(to set-word! ajoin ["^^" n]) func [body [block!]] [^ (n) body]] self
+]
+
+^each: funct [
+  lambda [any-function! block!]
+  data [series!]
+][
+  lambda: ^ 1 :lambda
+  foreach elem data [
+    lambda elem 
+  ]
+  exit
+]
+
 ^filter: funct [
   lambda [any-function! block!]
   data [series!]
 ][
   lambda: ^ 1 :lambda 
+  ^remove-each [! lambda _] data
+  data
 ]
+
+^where: :^filter
 
 ^map-each: funct [
   lambda [any-function! block!]
@@ -191,5 +216,19 @@ range: funct [
 	either vector [
 		make vector! reduce ['integer! bytes result]
 	][result]
+]
+
+refinements-of: funct [
+  f [any-function!]
+][
+  ^filter [all [refinement? _ not-equal? /local _]] copy spec-of :f
+]
+
+^remove-each: funct [
+  lambda [block! any-function!]
+  data [series!]
+][
+  lambda: ^ 1 :lambda
+  remove-each elem data [lambda elem]
 ]
 
