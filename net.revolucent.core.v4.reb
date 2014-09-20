@@ -244,7 +244,7 @@ refinements-of: funct [
   remove-each elem data [lambda elem]
 ]
 
-init: func [
+init: funct [
   "Set word or path (or block of the same) if NONE or UNSET."
   'settee [word! path! block!]
   new-value
