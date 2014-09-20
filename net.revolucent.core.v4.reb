@@ -20,13 +20,14 @@ REBOL [
 	Version: 4.0.0
 	Type: module
 	Exports: [
-    ^ ^1 ^2 ^3 ^each ^filter ^fold ^map ^map-each ^where ~ arity range refinements-of ^remove-each symbol
+    ^ ^1 ^2 ^3 ^each ^filter ^fold ^map ^map-each ^where ~ arity init range refinements-of ^remove-each symbol
   ]
 	Needs: [2.101.0]	
 	License: MIT
 ]
 
 symbol: funct [
+  "Creates self-referential words"
   'words [word! block!] 
 ][
   set words words
@@ -49,9 +50,10 @@ parse-lambda: funct [
 ]
 
 arity: funct [
+  "Number of arguments of a function, with or without refinements."
   f [any-function!]
-  /with
-    refinements [any-word! block!]
+  /refined "Whether to consider refinements. (Default: FALSE)"
+    refinements [logic! any-word! block!] "TRUE = all refinements, otherwise word or block of refinements"
   /local
     word
     arg-rule
@@ -67,15 +69,19 @@ arity: funct [
       opt string!
     ]
   ]
-  default refinements copy []
-  if any-word? refinements [refinements: reduce [refinements]]
+  refinements: case [
+    any-word? refinements [reduce [refinements]]
+    block? refinements [refinements]
+    refinements [refinements-of :f]
+    'else [copy []]
+  ]
   parse spec-of :f [
-    opt block! ; e.g., [catch]
-    opt string!
+    0 2 [block! | string!]
     arg-rule
     any [
       (count-arg: false)
       set refinement refinement! (if all [! equal? /local refinement find refinements refinement] [count-arg: true])
+      opt string!
       arg-rule
     ]
     end
@@ -83,9 +89,13 @@ arity: funct [
   count
 ]
 
+; If the number of arguments is 1, the argument can be referenced as _
+; in the body of the function, but _1 can also be used. For functions with
+; two or more arguments, _1, _2, _3, etc. must be used.
 ^: funct [
-  arg-count [integer!]
-  body [block! any-function!]
+  "Creates an anonymous function with the given number of arguments."
+  arg-count [integer!] "Number of arguments"
+  body [block! any-function!] "Function or body of function"
 ][
   assert [arg-count >= 0]
   make-spec: [
@@ -97,7 +107,7 @@ arity: funct [
   ]
   either block? :body [
     either arg-count = 1 [
-      func [_ /local _1] compose [_1: _ (body)]
+      func [_ /local _1] compose [_1: :_ (body)]
     ][
       func do make-spec body
     ]
@@ -116,11 +126,8 @@ arity: funct [
   ]
 ]
 
-for n 1 3 1 [
-  do bind/set/copy compose/deep [(to set-word! ajoin ["^^" n]) func [body [block!]] [^ (n) body]] self
-]
-
 ^each: funct [
+  "Functional FOREACH."
   lambda [any-function! block!]
   data [series!]
 ][
@@ -132,6 +139,7 @@ for n 1 3 1 [
 ]
 
 ^filter: funct [
+  "Filters the given series. (Modifies)"
   lambda [any-function! block!]
   data [series!]
 ][
@@ -143,6 +151,7 @@ for n 1 3 1 [
 ^where: :^filter
 
 ^map-each: funct [
+  "Function equivalent of MAP-EACH."
   lambda [any-function! block!]
   data [block! vector!]
 ][
@@ -153,6 +162,7 @@ for n 1 3 1 [
 ^map: :^map-each
 
 ^fold: funct [
+  "E.g., ^^FOLD [_1 + _2] RANGE [1 - 10]"
   lambda [any-function! block!]
   data [series!]
   /default
@@ -219,12 +229,14 @@ range: funct [
 ]
 
 refinements-of: funct [
+  "Returns a block with the refinements of the given function."
   f [any-function!]
 ][
-  ^filter [all [refinement? _ not-equal? /local _]] copy spec-of :f
+  ^filter [all [refinement? _ not-equal? /local _]] spec-of :f
 ]
 
 ^remove-each: funct [
+  "Functional version of REMOVE-EACH."
   lambda [block! any-function!]
   data [series!]
 ][
@@ -232,3 +244,48 @@ refinements-of: funct [
   remove-each elem data [lambda elem]
 ]
 
+init: func [
+  "Set word or path (or block of the same) if NONE or UNSET."
+  'settee [word! path! block!]
+  new-value
+  /only "Treat NEW-VALUE as single value"
+  /extend "If SETTEE is BLOCK, set all values to (last value of) NEW-VALUE"
+][
+  init-one: func [
+    settee [any-word! any-path!]
+    new-value
+    /local
+      value
+  ][
+    either all [! unset? get/any settee ! unset? get/any :settee ! none? value: get :settee] [
+      :value
+    ][
+      do compose [(to either any-path? settee [set-path!] [set-word!] settee) :new-value]
+    ]
+  ]
+  case [
+    all [! block? settee any [only ! block? :new-value]] [
+      init-one settee :new-value
+    ]
+    all [! block? settee block? :new-value] [
+      init-one settee first new-value 
+    ]
+    all [block? settee any [only ! block? :new-value]] [
+      either extend [
+        result: array/initial length? settee does [:new-value] ; Prevent ARRAY/INITIAL from calling NEW-VALUE if it's a function.
+        foreach settee settee [init-one settee :new-value]
+      ][
+        result: array length? settee
+        result/1: init-one settee/1 :new-value
+      ]
+      result
+    ]
+    'else [ ; SETTEE and NEW-VALUE are both blocks and ONLY is not set.
+      result: copy []
+      for i 1 length? settee 1 [
+        append/only result init-one settee/:i either all [extend greater? i length? new-value] [last new-value] [:new-value/:i]
+      ]
+      result
+    ]
+  ]
+]
