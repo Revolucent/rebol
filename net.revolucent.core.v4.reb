@@ -20,7 +20,7 @@ REBOL [
 	Version: 4.0.0
 	Type: module
 	Exports: [
-    ^ ^1 ^2 ^3 ^each ^filter ^fold ^map ^map-each ^where ~ arity init range refinements-of ^remove-each symbol
+    ^ ^1 ^2 ^3 ^each ^filter ^fold ^map ^map-each ^where ~ arity enumerator init range refinements-of ^remove-each symbol
   ]
 	Needs: [2.101.0]	
 	License: MIT
@@ -289,3 +289,39 @@ init: funct [
     ]
   ]
 ]
+
+enumerator: closure [
+  locals [block!]
+  definition [block!]
+  /local
+    enumerate
+][
+  enumerate: func compose [yield /local (locals)] definition
+  closure [
+    'word [word!]
+    body [block!]
+    /local  
+      results
+      value
+  ][
+    results: copy []
+    use [give stop pass] [
+      give: func [value /stop] [throw/name :value either stop ['stop-enumeration]['give-enumeration]]
+      stop: does [throw/name #[unset!] 'stop-enumeration]
+      pass: does [throw/name #[unset!] 'pass-enumeration]
+      set/any 'value catch/name [
+        enumerate func [value] [
+          yield: func reduce [word] bind/copy body 'give
+          catch/name [
+            append/only results catch/name [
+              yield :value
+            ] 'give-enumeration
+          ] 'pass-enumeration
+        ]
+      ] 'stop-enumeration
+      if value? 'value [append/only results :value]
+    ]
+    results
+  ]
+]
+
