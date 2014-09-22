@@ -20,7 +20,7 @@ REBOL [
 	Version: 4.0.0
 	Type: module
 	Exports: [
-    ^ ^1 ^2 ^3 ^each ^filter ^fold ^map ^map-each ^where ~ arity enumerator init range refinements-of ^remove-each symbol
+    ^ ^1 ^2 ^3 ^each ^filter ^fold ^map ^map-each ^tap ^where ~ arity enumerator init range refinements-of ^remove-each symbol tap
   ]
 	Needs: [2.101.0]	
 	License: MIT
@@ -124,6 +124,10 @@ arity: funct [
       :body
     ]
   ]
+]
+
+for n 1 3 1 [
+  extend self to word! ajoin ["^^" n] func [body [any-function! block!]] compose [^ (n) body]
 ]
 
 ^each: funct [
@@ -307,7 +311,11 @@ enumerator: closure [
     results: copy []
     use [give stop pass] [
       give: func [value /stop] [throw/name :value either stop ['stop-enumeration]['give-enumeration]]
-      stop: does [throw/name #[unset!] 'stop-enumeration]
+      stop: has [/limit result-limit] [
+        if any [not limit lesser-or-equal? result-limit length? results] [
+          throw/name #[unset!] 'stop-enumeration
+        ]
+      ]
       pass: does [throw/name #[unset!] 'pass-enumeration]
       set/any 'value catch/name [
         enumerate func [value] [
@@ -325,3 +333,13 @@ enumerator: closure [
   ]
 ]
 
+^tap: func [
+  "Applies an expression to a single argument"
+  f [block! any-function!]
+  arg
+][
+  f: ^ 1 :f
+  f :arg
+]
+
+tap: :^tap
