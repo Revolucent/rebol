@@ -19,7 +19,7 @@ REBOL [
 	Name: net.revolucent.series.v4
 	Version: 4.0.0
 	Type: module
-	Exports: [^each ^filter ^fold ^map ^map-each ^remove-each ^where enumerator ^range]
+	Exports: [^each ^filter ^fold ^map ^map-each ^remove-each ^where enumerator range]
 	Needs: [
 		2.101.0 
 		net.revolucent.core.v4
