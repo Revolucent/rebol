@@ -13,7 +13,7 @@
 ; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 REBOL [
-	Title: "Revolucent CSV Library"	
+	Title: "Revolucent Series Library"	
 	Author: "Gregory Higley"
 	Date: 2014-09-23
 	Name: net.revolucent.series.v4
