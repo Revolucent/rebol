@@ -51,42 +51,53 @@ parse-lambda: funct [
 
 arity: funct [
   "Number of arguments of a function, with or without refinements."
-  f [any-function!]
-  /refined "Whether to consider refinements. (Default: FALSE)"
+  f [any-function! word! path!]
+  /with "Whether to consider refinements. (Default: FALSE)"
     refinements [logic! any-word! block!] "TRUE = all refinements, otherwise word or block of refinements"
   /local
     word
     arg-rule
+    parts
     refinement
     count-arg
 ][
-  count: 0
-  count-arg: true
-  arg-rule: [
-    any [
-      [[word! | lit-word! | get-word!] (if count-arg [++ count])]
-      opt block!
-      opt string!
+  switch/default type?/word :f [
+    word! [
+      apply :arity [get :f with refinements]
     ]
-  ]
-  refinements: case [
-    any-word? refinements [reduce [refinements]]
-    block? refinements [refinements]
-    refinements [refinements-of :f]
-    'else [copy []]
-  ]
-  parse spec-of :f [
-    0 2 [block! | string!]
-    arg-rule
-    any [
-      (count-arg: false)
-      set refinement refinement! (if all [! equal? /local refinement find refinements refinement] [count-arg: true])
-      opt string!
+    path! [
+      parts: to block! f
+      apply :arity [first+ parts true parts]
+    ]
+  ][
+    count: 0
+    count-arg: true
+    arg-rule: [
+      any [
+        [[word! | lit-word! | get-word!] (if count-arg [++ count])]
+        opt block!
+        opt string!
+      ]
+    ]
+    refinements: case [
+      any-word? refinements [reduce [refinements]]
+      block? refinements [refinements]
+      refinements [refinements-of :f]
+      'else [copy []]
+    ]
+    parse spec-of :f [
+      0 2 [block! | string!]
       arg-rule
+      any [
+        (count-arg: false)
+        set refinement refinement! (if all [! equal? /local refinement find refinements refinement] [count-arg: true])
+        opt string!
+        arg-rule
+      ]
+      end
     ]
-    end
+    count
   ]
-  count
 ]
 
 ; If the number of arguments is 1, the argument can be referenced as _
@@ -150,7 +161,13 @@ refinements-of: funct [
   "Returns a block with the refinements of the given function."
   f [any-function!]
 ][
-  ^filter [all [refinement? _ not-equal? /local _]] spec-of :f
+  refinements: copy []
+  foreach item spec-of :f [
+    if all [refinement? item not-equal? /local item] [
+      append refinements item
+    ]
+  ]
+  refinements
 ]
 
 init: funct [
