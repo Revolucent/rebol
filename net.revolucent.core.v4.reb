@@ -20,7 +20,7 @@ REBOL [
 	Version: 4.0.0
 	Type: module
 	Exports: [
-    ^ ^1 ^2 ^3 ^tap ~ arity init refinements-of symbol tap
+    ^ ^1 ^2 ^3 ^tap ~ arity init is refinements-of symbol tap
   ]
 	Needs: [2.101.0]	
 	License: MIT
@@ -52,11 +52,13 @@ parse-lambda: funct [
 arity: funct [
   "Number of arguments of a function, with or without refinements."
   f [any-function! word! path!]
+  /strict "Check whether F has the given refinements"
   /with "Whether to consider refinements. (Default: FALSE)"
     refinements [logic! any-word! block!] "TRUE = all refinements, otherwise word or block of refinements"
   /local
     word
     arg-rule
+    f-refinements
     parts
     refinement
     count-arg
@@ -66,7 +68,7 @@ arity: funct [
       apply :arity [get :f with refinements]
     ]
     path! [
-      parts: to block! f
+      append parts: to block! f refinements
       apply :arity [first+ parts true parts]
     ]
   ][
@@ -82,8 +84,16 @@ arity: funct [
     refinements: case [
       any-word? refinements [reduce [refinements]]
       block? refinements [refinements]
-      refinements [refinements-of :f]
-      'else [copy []]
+      refinements [strict: false refinements-of :f]
+      'else [strict: false copy []]
+    ]
+    if strict [
+      f-refinements: refinements-of :f
+      foreach refinement refinements [
+        unless find f-refinements refinement [
+          cause-error 'script 'invalid-arg refinement
+        ]
+      ]
     ]
     parse spec-of :f [
       0 2 [block! | string!]
@@ -214,6 +224,27 @@ init: funct [
       result
     ]
   ]
+]
+
+is: funct [
+  "Checks whether a value is of (a) particular type(s)"
+  value
+  type [datatype! typeset! block!]
+][
+  test: func compose/deep [value [(type)]][:value]
+  result: false
+  try/except [
+    test :value
+    result: true
+  ] func [e] [
+    unless all [
+      equal? 'script e/type
+      equal? 'expect-arg e/id
+    ][
+      do e
+    ]
+  ]
+  result
 ]
 
 ^tap: func [
